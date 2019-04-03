@@ -7,5 +7,6 @@ int main(){ // int argc , const char *argv[]
     string file_name = "prueba.txt";
     int sample_speed = 8000;
     extract_notes(vect_note, note_limit, file_name, song_duration, sample_speed);
+    add_frequency(vect_note, note_limit);
     return 0;
 }
