@@ -110,11 +110,11 @@ void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_d
     initialize_wav(wav_file, song_duration, sample_speed, bits);
     for (int i = 0; i < note_quant; i++){
         for(int s = 0; s < vect_note[i].sample_quant; s++){
-            sample = amplitude*sin((2.0 * M_PI * vect_note[i].frequency * s + phase_angle)/16000.0) + height;
+            sample = amplitude*sin((2.0 * M_PI * vect_note[i].frequency * s + phase_angle) / 22000.0) + height;
             sample_to_char = (char) sample;
             wav_file.write((char*) &(sample_to_char), sizeof(char));
             if (s  == (vect_note[i].sample_quant) - 1 )
-                phase_angle = (asin((sample - height)/amplitude) * 16000.0) - 2.0 * M_PI * vect_note[i].frequency * s ;
+                phase_angle = phase_angle + 2.0 * M_PI * vect_note[i].frequency * (s + 1);
         }
     }
     wav_file.close();
