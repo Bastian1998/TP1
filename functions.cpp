@@ -4,7 +4,7 @@ int calculate_sample_quant(int duration, int sample_speed){
     return (sample_speed*duration)/1000;
 }
 //Extrae informacion de un archivo de texto y lo envia a un vector de struct, tambien retorna la duracion total de  la cancion
-int extract_notes(Note vect_note[], int &note_limit, string file_name, int song_duration, int sample_speed){
+int extract_notes(Note vect_note[], int &note_quant, string file_name, int song_duration, int sample_speed){
     string line;
     ifstream music_sheet;
     music_sheet.open(file_name);
@@ -12,10 +12,10 @@ int extract_notes(Note vect_note[], int &note_limit, string file_name, int song_
     song_duration = stoi(line);
     while (!music_sheet.eof()){
         getline(music_sheet, line, '\t');
-        vect_note[note_limit].name = line;
+        vect_note[note_quant].name = line;
         getline(music_sheet, line);
-        vect_note[note_limit].sample_limit = calculate_sample_quant(stoi(line), sample_speed);
-        note_limit++;
+        vect_note[note_quant].sample_quant = calculate_sample_quant(stoi(line), sample_speed);
+        note_quant++;
     }
     music_sheet.close();
     return song_duration;
@@ -63,16 +63,16 @@ int count_steps(string note){
     return steps;
 }
 // Agrega la frecuencia de cada nota al vector de structs
-void add_frequency(Note vect_note[], int note_limit){
+void add_frequency(Note vect_note[], int note_quant){
     double exponent = 0;
     double base_freq = 27.5;
     double constant = 0;
     int steps = 0;
-    for (int i = 0; i < note_limit; i++){
+    for (int i = 0; i < note_quant; i++){
         steps = count_steps(vect_note[i].name);
         exponent = steps/12.0;
         constant = pow(2.0, exponent);
-        vect_note[i].frequency = (float) (base_freq * constant);
+        vect_note[i].frequency = (double) (base_freq * constant);
     }
 }
 // Carga el formato del archivo wav
@@ -81,13 +81,13 @@ void initialize_wav(ofstream &wav_file, int song_duration, int sample_speed, sho
     int chunk_format_size = 16;
     short int audio_format = 1;
     short int cc = 1;
-    int bytes_rate = (sample_speed*cc*bits/8);
-    short int block_align = (cc*bits/8);
+    short int bytes_rate = short(sample_speed * cc * bits) / 8;
+    short int block_align = short(bits * cc) / 8;
     int chunk_data_size = ((sample_speed*song_duration)/1000) + 8;
     wav_file << "RIFF";
     wav_file.write((char*) &(file_size), sizeof(int));
     wav_file << "WAVE";
-    wav_file << "fmt";
+    wav_file << "fmt ";
     wav_file.write ((char*) &(chunk_format_size), sizeof(int));
     wav_file.write ((char*) &(audio_format), sizeof(short int));
     wav_file.write ((char*) &(cc), sizeof(short int));
@@ -98,12 +98,31 @@ void initialize_wav(ofstream &wav_file, int song_duration, int sample_speed, sho
     wav_file << "data";
     wav_file.write ((char*) &(chunk_data_size), sizeof(int));
 }
-    
-    
-    
-    
-    
-    
 
-
+void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_duration, int sample_speed, short int bits){
+    ofstream wav_file;
+    wav_file.open(file_name_wav, ios::binary);
+    double sample = 0.0;
+    char sample_to_char;
+    double twopi = M_PI * 2.0;
+    double amplitude = 100.0;
+    double height = 100.0;
+    double phase_angle = 0.0;
+    initialize_wav(wav_file, song_duration, sample_speed, bits);
+    for (int i = 0; i < note_quant; i++){
+        for(float s = 1.0; s < vect_note[i].sample_quant; s++){
+            sample = amplitude*sin(twopi*vect_note[i].frequency * s + phase_angle) + height;
+            sample_to_char = (char) sample;
+            wav_file.write((char*) &(sample_to_char), sizeof(char));
+            if (s == vect_note[i].sample_quant - 1.0)
+                phase_angle = sample;
+        }
+    }
+    wav_file.close();
 }
+    
+    
+    
+    
+
+
