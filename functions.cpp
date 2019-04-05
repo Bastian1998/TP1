@@ -1,7 +1,7 @@
 #include "functions.hpp"
 //Calcula  la cantidad de muestras de una nota segun su duracion
 int calculate_sample_quant(int duration, int sample_speed){
-    return (sample_speed*duration)/1000;
+    return  (sample_speed*duration)/1000;
 }
 //Extrae informacion de un archivo de texto y lo envia a un vector de struct, tambien retorna la duracion total de  la cancion
 int extract_notes(Note vect_note[], int &note_quant, string file_name, int song_duration, int sample_speed){
@@ -104,18 +104,17 @@ void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_d
     wav_file.open(file_name_wav, ios::binary);
     double sample = 0.0;
     char sample_to_char;
-    double twopi = M_PI * 2.0;
-    double amplitude = 100.0;
-    double height = 100.0;
+    double amplitude = 127.5;
+    double height = 127.5;
     double phase_angle = 0.0;
     initialize_wav(wav_file, song_duration, sample_speed, bits);
     for (int i = 0; i < note_quant; i++){
-        for(float s = 1.0; s < vect_note[i].sample_quant; s++){
-            sample = amplitude*sin(twopi*vect_note[i].frequency * s + phase_angle) + height;
+        for(int s = 0; s < vect_note[i].sample_quant; s++){
+            sample = amplitude*sin((2.0 * M_PI * vect_note[i].frequency * s + phase_angle)/16000.0) + height;
             sample_to_char = (char) sample;
             wav_file.write((char*) &(sample_to_char), sizeof(char));
-            if (s == vect_note[i].sample_quant - 1.0)
-                phase_angle = sample;
+            if (s  == (vect_note[i].sample_quant) - 1 )
+                phase_angle = (asin((sample - height)/amplitude) * 16000.0) - 2.0 * M_PI * vect_note[i].frequency * s ;
         }
     }
     wav_file.close();
