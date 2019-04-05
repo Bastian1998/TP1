@@ -1,10 +1,10 @@
 #include "functions.hpp"
 //Calcula  la cantidad de muestras de una nota segun su duracion
-int calculate_samples(int duration, int sample_speed){
+int calculate_sample_quant(int duration, int sample_speed){
     return (sample_speed*duration)/1000;
 }
-//Extrae informacion de un archivo de texto y lo envia a un vector de struct
-void extract_notes(Note vect_note[], int &note_limit, string file_name, int song_duration, int sample_speed){
+//Extrae informacion de un archivo de texto y lo envia a un vector de struct, tambien retorna la duracion total de  la cancion
+int extract_notes(Note vect_note[], int &note_limit, string file_name, int song_duration, int sample_speed){
     string line;
     ifstream music_sheet;
     music_sheet.open(file_name);
@@ -14,10 +14,11 @@ void extract_notes(Note vect_note[], int &note_limit, string file_name, int song
         getline(music_sheet, line, '\t');
         vect_note[note_limit].name = line;
         getline(music_sheet, line);
-        vect_note[note_limit].sample_limit = calculate_samples(stoi(line), sample_speed);
+        vect_note[note_limit].sample_limit = calculate_sample_quant(stoi(line), sample_speed);
         note_limit++;
     }
     music_sheet.close();
+    return song_duration;
 }
 //Cuenta saltos entre letras
 void count_letters(char letter, int &steps, int number){
@@ -73,4 +74,36 @@ void add_frequency(Note vect_note[], int note_limit){
         constant = pow(2.0, exponent);
         vect_note[i].frequency = (float) (base_freq * constant);
     }
+}
+// Carga el formato del archivo wav
+void initialize_wav(ofstream &wav_file, int song_duration, int sample_speed, short int bits ){
+    int file_size = ((song_duration*sample_speed)/1000) + 36;
+    int chunk_format_size = 16;
+    short int audio_format = 1;
+    short int cc = 1;
+    int bytes_rate = (sample_speed*cc*bits/8);
+    short int block_align = (cc*bits/8);
+    int chunk_data_size = ((sample_speed*song_duration)/1000) + 8;
+    wav_file << "RIFF";
+    wav_file.write((char*) &(file_size), sizeof(int));
+    wav_file << "WAVE";
+    wav_file << "fmt";
+    wav_file.write ((char*) &(chunk_format_size), sizeof(int));
+    wav_file.write ((char*) &(audio_format), sizeof(short int));
+    wav_file.write ((char*) &(cc), sizeof(short int));
+    wav_file.write ((char*) &(sample_speed), sizeof(int));
+    wav_file.write ((char*) &(bytes_rate), sizeof(int));
+    wav_file.write ((char*) &(block_align), sizeof(short int));
+    wav_file.write ((char*) &(bits), sizeof(short int));
+    wav_file << "data";
+    wav_file.write ((char*) &(chunk_data_size), sizeof(int));
+}
+    
+    
+    
+    
+    
+    
+
+
 }
