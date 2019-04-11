@@ -69,10 +69,13 @@ void add_frequency(Note vect_note[], int note_quant){
     double constant = 0;
     int steps = 0;
     for (int i = 0; i < note_quant; i++){
-        steps = count_steps(vect_note[i].name);
-        exponent = steps/12.0;
-        constant = pow(2.0, exponent);
-        vect_note[i].frequency = (double) (base_freq * constant);
+        if (vect_note[i].name != "H"){
+            steps = count_steps(vect_note[i].name);
+            exponent = steps/12.0;
+            constant = pow(2.0, exponent);
+            vect_note[i].frequency = (double) (base_freq * constant);
+        }else
+            vect_note[i].frequency = 0;     
     }
 }
 // Carga el formato del archivo wav
@@ -98,7 +101,7 @@ void initialize_wav(ofstream &wav_file, int song_duration, int sample_speed, sho
     wav_file << "data";
     wav_file.write ((char*) &(chunk_data_size), sizeof(int));
 }
-
+// Crea el archivo wav, le asigna las muestras por nota y aplica fadeout  a las ultimas 25 notas
 void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_duration, int sample_speed, short int bits){
     ofstream wav_file;
     wav_file.open(file_name_wav, ios::binary);
@@ -107,10 +110,13 @@ void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_d
     double amplitude = 127.5;
     double height = 127.5;
     double phase_angle = 0.0;
+    double amplitude_aux = 127.5;
     initialize_wav(wav_file, song_duration, sample_speed, bits);
     for (int i = 0; i < note_quant; i++){
+        if (i > note_quant - 25)
+            amplitude -= (amplitude_aux/25.0);
         for(int s = 0; s < vect_note[i].sample_quant; s++){
-            sample = amplitude*sin((2.0 * M_PI * vect_note[i].frequency * s + phase_angle) / 22000.0) + height;
+            sample = amplitude*sin((2.0 * M_PI * vect_note[i].frequency * s + phase_angle) / (double) sample_speed) + height;
             sample_to_char = (char) sample;
             wav_file.write((char*) &(sample_to_char), sizeof(char));
             if (s  == (vect_note[i].sample_quant) - 1 )
@@ -121,7 +127,7 @@ void load_wav(Note vect_note[], int note_quant, string file_name_wav, int song_d
 }
     
     
-    
+
     
 
 
